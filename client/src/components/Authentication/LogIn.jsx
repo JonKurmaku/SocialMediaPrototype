@@ -1,56 +1,24 @@
-import React from 'react'
-import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, VStack } from '@chakra-ui/react'
-import { useState } from 'react'
-
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 const Login = () => {
-    const [show, setShow] = useState(false)
-    const [name,setName]=useState()
-    const [password,setPassword]=useState()
+    const { register, handleSubmit, formState: { errors } } = useForm();
 
-    const handleClick = () =>{setShow(!show)}
+    return (
+        <>
+            <form className='login-form'>
+            <label htmlFor="">Email *</label>    
+            <input className='infos' type="email" {...register("email", { required: true })} placeholder='Enter Your Email Address' />
+            {errors.email && <span className="notifications">Email is mandatory</span>}
 
-    const submitHandler = () => {}
+            <label htmlFor="">Password *</label>    
+            <input className='infos' type="password" {...register("password", { required: true })} placeholder='Enter Password' />
+            {errors.password && <span className="notifications">Password is mandatory</span>}
 
-  
-  return (
-<VStack spacing='5px' color="black">
-    
-    <FormControl id='first-name' isRequired>
-        <FormLabel>Name</FormLabel>
-        <Input
-        placeholder='Enter your name'
-        onChange={(e)=>setName(e.target.value)}
-        />
-    </FormControl>
-
-    <FormControl id='password' isRequired>
-        <FormLabel>Password</FormLabel>
-        <InputGroup>
-        <Input
-            id="1"
-            type={show ? "text" : "password"}
-            placeholder='Enter your password'
-            onChange={(e)=>setPassword(e.target.value)}
-        />
-        
-            <InputRightElement width="4.5rem">
-                <Button h="1.75rem" size="sm" onClick={handleClick}>
-                    {show ? "Hide" : "Show"}
-                </Button>
-            </InputRightElement>
-        
-        </InputGroup>
-    </FormControl>
-
-
-    <Button
-        colorScheme='blue'
-        width="100%"
-        style={{ marginTop:15 }}
-        onClick={submitHandler}
-    >Log In</Button>
-    </VStack>  )
+            <input type="submit" value="Log In" />
+            </form>
+        </>
+    )
 }
 
-export default Login
+export default Login;
