@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -11,6 +12,7 @@ const Signup = () => {
     const [confirmPassword, setConfirmPassword] = useState();
     const [pic, setPic] = useState();
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const postDetails = async (pics) => {
         setLoading(true);
@@ -63,6 +65,7 @@ const Signup = () => {
 
             localStorage.setItem("userInfo", JSON.stringify(data));
             setLoading(false);
+            navigate("/chats");
         } catch (error) {
             console.error("Error submitting form: ", error);
             alert('Error signing up: ' + error.message);
