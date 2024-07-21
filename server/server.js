@@ -8,6 +8,7 @@ const { notFound , errorHandler } = require("./middleware/errorMiddleware.js")
 
 const chatRoutes = require("./routes/chatRoutes.js")
 const userRoutes = require("./routes/userRoutes.js")
+const messageRoutes = require("./routes/messageRoutes.js")
 
 var app = express()
 dotenv.config()
@@ -21,12 +22,14 @@ console.log(port);
 app.use(cors());
 app.use(express.json())
 
+/*
 app.get('/',(req,res)=>{
     res.send("HELLO XHAXHI")
-})
+})*/
 
 app.use('/api/user',userRoutes)
 app.use('/api/chat',chatRoutes)
+app.use('/api/message',messageRoutes)
 
 
 app.use(notFound)
