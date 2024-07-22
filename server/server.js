@@ -10,12 +10,12 @@ const chatRoutes = require("./routes/chatRoutes.js")
 const userRoutes = require("./routes/userRoutes.js")
 const messageRoutes = require("./routes/messageRoutes.js")
 
-var app = express()
+const app = express()
 dotenv.config()
 connectDB()
 
 
-var port = process.env.PORT || 3000
+const port = process.env.PORT || 3000
 console.log(process.env.PORT)
 console.log(port);
 
@@ -35,6 +35,19 @@ app.use('/api/message',messageRoutes)
 app.use(notFound)
 app.use(errorHandler)
 
-app.listen(port,()=>{
+const server = app.listen(port,()=>{
     console.log(`Server is up on port ${port}`)
 })
+
+const io = require("socket.io")(server,{
+    pingTimeout:60000,
+    cors:{
+        origin: "https://localhost:3000"
+    }
+})
+
+io.on("connection",(socket)=>{
+    console.log('connected to socket.io')
+})
+
+
