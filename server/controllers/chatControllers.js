@@ -53,23 +53,25 @@ const accessChat = asyncHandler(async (req, res) => {
 
 const fetchChats = asyncHandler(async (req, res) => {
   try {
-    Chat.find({ users: { $elemMatch: { $eq: req.user._id } } }).then(result => res.send(result))
-      .populate("users", "-password")
-      .populate("groupAdmin", "-password")
-      .populate("latestMessage")
-      .sort({ updatedAt: -1 })
-      .then(async (result) => {
-        result = await User.populate(isChat, {
-          path: "latestMessage.sender",
+    const chats = await Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+      .populate("users", "name email") 
+      .populate("groupAdmin", "name email") 
+      .populate({
+        path: "latestMessage",
+        populate: {
+          path: "sender",
           select: "name pic email"
-        })
-
-        res.status(200).send(result)
+        }
       })
-  } catch (error) {
+      .sort({ updatedAt: -1 });
 
+    res.status(200).send(chats);
+  } catch (error) {
+    console.error("Error fetching chats:", error);
+    res.status(500).send({ error: "Failed to fetch chats" });
   }
-})
+});
+
 
 const createGroupChat = asyncHandler(async (req, res) => {
   if (!req.body.users || !req.body.name) {
