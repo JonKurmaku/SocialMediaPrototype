@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import user from '../utils/loggedUser';
 import ModalCreateGroupChat from '../components/ModalCreateGroupChat'
 import ModalModifyGroupChat from '../components/ModalModifyGroupChat';
 
 export const ChatsView = () => {
-
+    const navigate = useNavigate();
     const [chats, setChats] = useState([]);
     const [search, setSearch] = useState();
     const [searchResult, setSearchResult] = useState([]);
@@ -23,6 +24,8 @@ export const ChatsView = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [chatRenamed, setChatRenamed] = useState('');
     const [userLoggedUser, setUserLoggedUser] = useState('');
+    const [profileClicked, setProfileClicked] = useState(false);
+    const [profileModal, setProfileModal] = useState(false);
     // const [loadingChat, setLoadingChat] = useState();
 
     useEffect(() => {
@@ -159,6 +162,7 @@ export const ChatsView = () => {
             const { data } = await axios.post('/api/chat/group', body, config)
             console.log(data);
 
+
             const existingChat = chats.find(chat => chat._id === data._id);
             if (!existingChat) {
                 setChats(prevChats => [...prevChats, data]);
@@ -247,6 +251,14 @@ export const ChatsView = () => {
         setChatRenamed(chatName);
     };
 
+    const toggleDropDownMenu = () => {
+        setProfileClicked(!profileClicked);
+    }
+
+    const toggleProfileModal = () => {
+        setProfileModal(true);
+    }
+
     const handleInputChange = (e) => {
         setInputValue(e.target.value);
     };
@@ -271,6 +283,10 @@ export const ChatsView = () => {
         }
     }
 
+    const logout = () => {
+        localStorage.removeItem('userInfo');
+        navigate('/');
+    }
 
     return (
 
@@ -284,12 +300,8 @@ export const ChatsView = () => {
                         <input type="text" placeholder="Search User" onChange={(e) => setSearch(e.target.value)} />
                     </div>
                     <h2>ChillChat</h2>
-                    <div>
-                        <select name="" id="">
-                            <option value="">{userLoggedUser}</option>
-                            <option value="Profile">Profile</option>
-                            <option value="LogOut">Log out</option>
-                        </select>
+                    <div className='loggedUser' onClick={toggleDropDownMenu}>
+                        <p>{userLoggedUser}</p>
                     </div>
                 </div>
 
@@ -388,6 +400,26 @@ export const ChatsView = () => {
                 />
             )}
 
+            {/* Dropdown menu */}
+            {profileClicked && (
+                <div className='dropdownMenu'>
+                    <h2 onClick={() => {
+                        toggleProfileModal()
+                        setProfileClicked(false)
+                    }}>Profile</h2>
+                    <h2 onClick={logout}>Log out</h2>
+                </div>
+            )}
+
+            {profileModal && (
+                <div className='modalOverlay'>
+                    <div className='modalForProfile'>
+                        <h2>Name: {user().name}</h2>
+                        <h2>Email: {user().email}</h2>
+                        <button className='closeBtn' onClick={() => setProfileModal(false)}>Close</button>
+                    </div>
+                </div>
+            )}
 
         </>
     );

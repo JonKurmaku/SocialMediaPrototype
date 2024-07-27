@@ -2,7 +2,7 @@ export default function ModalModifyGroupChat({isEditing, chatRenamed,setChatRena
     toggleEditMode,inputValue,handleInputChange,handleKeyDown,toggleGroupChatModalModifier}) {
     return (
         <div className='modalOverlay'>
-            <div className='modalForCreatingGroupChat'>
+            <div className='modalForModyfingGroupChat'>
                 <div className='editGroupName'>
                     {isEditing ? (
                         <input className='chatNameModifier'
