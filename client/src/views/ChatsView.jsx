@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import user from '../utils/loggedUser';
+import ModalCreateGroupChat from '../components/ModalCreateGroupChat'
+import ModalModifyGroupChat from '../components/ModalModifyGroupChat';
 
 export const ChatsView = () => {
-
+    const navigate = useNavigate();
     const [chats, setChats] = useState([]);
     const [search, setSearch] = useState();
     const [searchResult, setSearchResult] = useState([]);
@@ -19,13 +23,18 @@ export const ChatsView = () => {
     const [hasLoaded, setHasLoaded] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [chatRenamed, setChatRenamed] = useState('');
+    const [userLoggedUser, setUserLoggedUser] = useState('');
+    const [profileClicked, setProfileClicked] = useState(false);
+    const [profileModal, setProfileModal] = useState(false);
     // const [loadingChat, setLoadingChat] = useState();
+
+    useEffect(() => {
+        setUserLoggedUser(user().name);
+    }, []);
 
     const fetchedData = async () => {
         try {
-            let user = localStorage.getItem('userInfo');
-            user = JSON.parse(user)
-            let Token = user.token
+            let Token = user().token
 
             const config = {
                 headers: {
@@ -49,6 +58,7 @@ export const ChatsView = () => {
     }, []);
 
 
+
     const handleSearch = async () => {
         if (!search) {
             alert('You should enter a name here');
@@ -56,9 +66,7 @@ export const ChatsView = () => {
         }
 
         try {
-            let user = localStorage.getItem('userInfo');
-            user = JSON.parse(user)
-            let Token = user.token
+            let Token = user().token
 
             const config = {
                 headers: {
@@ -80,9 +88,7 @@ export const ChatsView = () => {
 
     const accessChat = async (userId) => {
         try {
-            let user = localStorage.getItem('userInfo');
-            user = JSON.parse(user)
-            let Token = user.token
+            let Token = user().token
             const config = {
                 headers: {
                     "Content-type": "application/json",
@@ -112,9 +118,7 @@ export const ChatsView = () => {
 
     const seeChat = async (userID) => {
         try {
-            let user = localStorage.getItem('userInfo');
-            user = JSON.parse(user)
-            let Token = user.token
+            let Token = user().token
 
             const config = {
                 headers: {
@@ -138,9 +142,7 @@ export const ChatsView = () => {
     //function to create a group chat
     const createGroupChat = async (name, users) => {
         try {
-            let user = localStorage.getItem('userInfo');
-            user = JSON.parse(user)
-            let Token = user.token
+            let Token = user().token
 
             const config = {
                 headers: {
@@ -160,6 +162,7 @@ export const ChatsView = () => {
             const { data } = await axios.post('/api/chat/group', body, config)
             console.log(data);
 
+
             const existingChat = chats.find(chat => chat._id === data._id);
             if (!existingChat) {
                 setChats(prevChats => [...prevChats, data]);
@@ -173,9 +176,7 @@ export const ChatsView = () => {
     //function to update chat name
     const renameGroupChat = async (chatId, chatName) => {
         try {
-            let user = localStorage.getItem('userInfo');
-            user = JSON.parse(user)
-            let Token = user.token
+            let Token = user().token
 
             const config = {
                 headers: {
@@ -192,10 +193,10 @@ export const ChatsView = () => {
                 newChatName: chatRenamed
             }
 
-            const {data} = await axios.put('/api/chat/rename', body, config);
+            const { data } = await axios.put('/api/chat/rename', body, config);
             console.log(data);
 
-        }catch (error){
+        } catch (error) {
             console.log(error);
         }
     }
@@ -203,9 +204,8 @@ export const ChatsView = () => {
     //function to send a message to a single chat or group chat
     const sendMessage = async () => {
         try {
-            let user = localStorage.getItem('userInfo');
-            user = JSON.parse(user)
-            let Token = user.token
+            let Token = user().token
+
             const config = {
                 headers: {
                     "Content-type": "application/json",
@@ -227,6 +227,11 @@ export const ChatsView = () => {
             console.log(data);
 
             setMessage('');
+            setChatMessages((prev) => [...prev, {
+                chat: null,
+                content: message,
+                sender: user
+            }]);
         } catch (error) {
             console.log(error);
         }
@@ -238,13 +243,21 @@ export const ChatsView = () => {
 
     const toggleGroupChatModalModifier = () => {
         setShowGroupChatModalModifier(!showGroupChatModalModifier);
-
+        setIsEditing(false)
     };
 
     const toggleEditMode = () => {
         setIsEditing(!isEditing);
         setChatRenamed(chatName);
     };
+
+    const toggleDropDownMenu = () => {
+        setProfileClicked(!profileClicked);
+    }
+
+    const toggleProfileModal = () => {
+        setProfileModal(true);
+    }
 
     const handleInputChange = (e) => {
         setInputValue(e.target.value);
@@ -270,18 +283,29 @@ export const ChatsView = () => {
         }
     }
 
+    const logout = () => {
+        localStorage.removeItem('userInfo');
+        navigate('/');
+    }
 
     return (
-        
+
         <>
             <div className="big-container">
+
+                {/* Navbar */}
                 <div className="navbar">
                     <div className="searchUser">
                         <img src="/searchLogo.png" alt="Search" onClick={handleSearch} />
                         <input type="text" placeholder="Search User" onChange={(e) => setSearch(e.target.value)} />
                     </div>
                     <h2>ChillChat</h2>
+                    <div className='loggedUser' onClick={toggleDropDownMenu}>
+                        <p>{userLoggedUser}</p>
+                    </div>
                 </div>
+
+
                 <div className="chatView">
                     <div className='chatNav'>
                         <div className="chatItems">
@@ -321,6 +345,8 @@ export const ChatsView = () => {
                         </div>
                     </div>
 
+
+                    {/*place where you can see messages */}
                     <div className='chatPlace'>
                         {!hasLoaded && chatMessages.length === 0 ? (
                             <h1>Click on a user to start chatting</h1>
@@ -357,73 +383,43 @@ export const ChatsView = () => {
 
 
 
-            {/* modal for creating groupchat */}            
-            {showGroupChatModal && (
-                <div className='modalOverlay'>
-                    <div className='modalForCreatingGroupChat'>
-                        <h2 className='font'>Create Group Chat</h2>
-                        <input
-                            type="text"
-                            placeholder="Enter chat name"
-                            value={groupChatName}
-                            onChange={(e) => setGroupChatName(e.target.value)}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Add Users"
-                            value={inputValue}
-                            onChange={handleInputChange}
-                            onKeyDown={handleKeyDown}
-                        />
-
-                        <div className='users'>
-                            {searchUsers.map((user, index) => (
-                                <div key={index}>{user.name}</div>
-                            ))}
-                        </div>
-                        <div className='buttons'>
-                            <button className='createBtn' onClick={handleCreateGroupChat}>Create Chat</button>
-                            <button className='closeBtn' onClick={toggleGroupChatModal}>Close</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* modal for creating groupchat */}
+            {showGroupChatModal && <ModalCreateGroupChat groupChatName={groupChatName} setGroupChatName={setGroupChatName}
+                inputValue={inputValue} handleInputChange={handleInputChange} handleKeyDown={handleKeyDown}
+                handleCreateGroupChat={handleCreateGroupChat} toggleGroupChatModal={toggleGroupChatModal}
+                searchUsers={searchUsers} />}
 
 
 
-            {/* modal for modifying groupchat */}  
+            {/* modal for modifying groupchat */}
             {showGroupChatModalModifier && (
-                <div className='modalOverlay'>
-                    <div className='modalForCreatingGroupChat'>
-                        <div className='editGroupName'>
-                            {!isEditing ? (
-                                 <input className='chatNameModifier'
-                                 type="text"
-                                 value={chatRenamed}
-                                 onChange={(e) => setChatRenamed(e.target.value)}
-                                 onKeyDown={handleGroupChatNameChange}
-                             />
-                            ):(<p className='font'>{chatName}</p>)}
-                            <img src="/edit_.png" alt="" onClick={toggleEditMode}/>
-                        </div>
+                <ModalModifyGroupChat isEditing={isEditing} chatRenamed={chatRenamed} setChatRenamed={setChatRenamed}
+                    handleGroupChatNameChange={handleGroupChatNameChange} chatName={chatName} toggleEditMode={toggleEditMode}
+                    inputValue={inputValue} handleInputChange={handleInputChange} handleKeyDown={handleKeyDown}
+                    toggleGroupChatModalModifier={toggleGroupChatModalModifier}
+                />
+            )}
 
-                        <input
-                            type="text"
-                            placeholder="Add Users"
-                            value={inputValue}
-                            onChange={handleInputChange}
-                            onKeyDown={handleKeyDown}
-                        />
-
-                        <div className='buttons'>
-                            <button className='closeBtn' onClick={() => {
-                                toggleGroupChatModalModifier()
-                                }}>Close</button>
-                        </div>
-                    </div>
+            {/* Dropdown menu */}
+            {profileClicked && (
+                <div className='dropdownMenu'>
+                    <h2 onClick={() => {
+                        toggleProfileModal()
+                        setProfileClicked(false)
+                    }}>Profile</h2>
+                    <h2 onClick={logout}>Log out</h2>
                 </div>
             )}
 
+            {profileModal && (
+                <div className='modalOverlay'>
+                    <div className='modalForProfile'>
+                        <h2>Name: {user().name}</h2>
+                        <h2>Email: {user().email}</h2>
+                        <button className='closeBtn' onClick={() => setProfileModal(false)}>Close</button>
+                    </div>
+                </div>
+            )}
 
         </>
     );
