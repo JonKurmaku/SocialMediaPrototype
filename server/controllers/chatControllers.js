@@ -80,9 +80,9 @@ const createGroupChat = asyncHandler(async (req, res) => {
       .status(400)
       .send({ message: "Group chat requires more than 2 users" })
   }
-
+  console.log(req.body);
   users.push(req.user)
-
+  console.log(users);
   try {
     //
     const groupChat = await Chat.create({
@@ -93,8 +93,8 @@ const createGroupChat = asyncHandler(async (req, res) => {
     })
 
     const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
-      .populate("users", "-password")
-      .populate("groupAdmin", "-password")
+      .populate("users", "name email")
+      .populate("groupAdmin", "name email")
 
     res.status(200).json(fullGroupChat)
   } catch (error) {
