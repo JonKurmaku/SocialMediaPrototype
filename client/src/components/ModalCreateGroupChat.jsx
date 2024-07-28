@@ -1,4 +1,4 @@
-export default function ModalCreateGroupChat({ groupChatName, setGroupChatName, inputValue, handleInputChange, handleKeyDown, handleCreateGroupChat, toggleGroupChatModal, searchUsers }) {
+export default function ModalCreateGroupChat({ groupChatName, setGroupChatName, valueEntered, handleInputChange, handleKeyDown, handleCreateGroupChat, toggleGroupChatModal, searchUsers }) {
     return (
         <div className='modalOverlay'>
             <div className='modalForCreatingGroupChat'>
@@ -12,7 +12,7 @@ export default function ModalCreateGroupChat({ groupChatName, setGroupChatName, 
                 <input
                     type="text"
                     placeholder="Add Users"
-                    value={inputValue}
+                    value={valueEntered}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                 />
