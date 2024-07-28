@@ -15,7 +15,6 @@ export const ChatsView = () => {
     const [showGroupChatModal, setShowGroupChatModal] = useState(false);
     const [showGroupChatModalModifier, setShowGroupChatModalModifier] = useState(false);
     const [searchUsers, setSearchUsers] = useState([]);
-    const [inputValue, setInputValue] = useState('');
     const [groupChatName, setGroupChatName] = useState('');
     const [message, setMessage] = useState('');
     const [chatID, setChatID] = useState();
@@ -26,6 +25,8 @@ export const ChatsView = () => {
     const [userLoggedUser, setUserLoggedUser] = useState('');
     const [profileClicked, setProfileClicked] = useState(false);
     const [profileModal, setProfileModal] = useState(false);
+    const [valueEntered, setValueEntered] = useState('');
+    const [groupUsers, setGroupUsers] = useState([]);
     // const [loadingChat, setLoadingChat] = useState();
 
     useEffect(() => {
@@ -86,6 +87,29 @@ export const ChatsView = () => {
         }
     }
 
+    const handleSearchUser = async (name) => {
+
+        try {
+            let Token = user().token
+
+            const config = {
+                headers: {
+                    Authorization: `Bearer ${Token}`,
+                    'Cache-Control': 'no-cache', // Disable cache
+                    Pragma: 'no-cache', // Disable cache
+                    Expires: '0', // Disable cache
+                },
+            };
+
+            const { data } = await axios.get(`/api/user?search=${name}`, config);
+            console.log(data);
+            return data;
+            // setChats(data);
+        } catch (error) {
+            alert('Error getting the user', error);
+        }
+    }
+
     const accessChat = async (userId) => {
         try {
             let Token = user().token
@@ -140,7 +164,7 @@ export const ChatsView = () => {
     }
 
     //function to create a group chat
-    const createGroupChat = async (name, users) => {
+    const createGroupChat = async (name) => {
         try {
             let Token = user().token
 
@@ -156,12 +180,15 @@ export const ChatsView = () => {
 
             const body = {
                 name: name,
-                users: JSON.stringify(users.map(user => user._id))
+                users: JSON.stringify(searchUsers.map((user) => user._id))
             };
 
             const { data } = await axios.post('/api/chat/group', body, config)
             console.log(data);
 
+            //data.users.map((u) => console.log(u.name));
+            setGroupUsers(data.users);
+            
 
             const existingChat = chats.find(chat => chat._id === data._id);
             if (!existingChat) {
@@ -169,6 +196,7 @@ export const ChatsView = () => {
             }
         } catch (error) {
             console.log(error);
+            return [];
         }
 
     }
@@ -230,7 +258,7 @@ export const ChatsView = () => {
             setChatMessages((prev) => [...prev, {
                 chat: null,
                 content: message,
-                sender: user
+                sender: data.sender.name
             }]);
         } catch (error) {
             console.log(error);
@@ -260,18 +288,27 @@ export const ChatsView = () => {
     }
 
     const handleInputChange = (e) => {
-        setInputValue(e.target.value);
+        setValueEntered(e.target.value);
     };
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = async (e) => {
         if (e.key === 'Enter') {
-            setSearchUsers([...searchUsers, { name: inputValue }]);
-            setInputValue('');
+            console.log('Value Entered:', valueEntered);
+            const data = await handleSearchUser(valueEntered);
+        
+            if (data.length > 0) {
+                setSearchUsers((prev) => {
+                    const existingUserIds = prev.map(user => user._id);
+                    const newUsers = data.filter(user => !existingUserIds.includes(user._id));
+                    return [...prev, ...newUsers];
+                });
+            }
+            setValueEntered('');
         }
     };
-
+    console.log(searchUsers);
     const handleCreateGroupChat = () => {
-        createGroupChat(groupChatName, searchUsers);
+        createGroupChat(groupChatName);
         setShowGroupChatModal(false);
     };
 
@@ -324,6 +361,7 @@ export const ChatsView = () => {
                                         setChatID(data._id);
                                         setChatName(data.chatName);
                                         setSelectedChat(data.isGroupChat);
+                                        setGroupUsers(data.users);
                                     }}>{data.chatName}</div>
                                 ))
                             }
@@ -366,7 +404,7 @@ export const ChatsView = () => {
                                 <div className="messages">
                                     {chatMessages.map((msg) => (
                                         <div key={msg._id}>
-                                            <strong>{msg.sender.name}: </strong>
+                                            <strong>{msg.sender.name ? msg.sender.name : msg.sender}: </strong>
                                             {msg.content}
                                         </div>
                                     ))}
@@ -385,7 +423,7 @@ export const ChatsView = () => {
 
             {/* modal for creating groupchat */}
             {showGroupChatModal && <ModalCreateGroupChat groupChatName={groupChatName} setGroupChatName={setGroupChatName}
-                inputValue={inputValue} handleInputChange={handleInputChange} handleKeyDown={handleKeyDown}
+                valueEntered={valueEntered} handleInputChange={handleInputChange} handleKeyDown={handleKeyDown}
                 handleCreateGroupChat={handleCreateGroupChat} toggleGroupChatModal={toggleGroupChatModal}
                 searchUsers={searchUsers} />}
 
@@ -395,8 +433,8 @@ export const ChatsView = () => {
             {showGroupChatModalModifier && (
                 <ModalModifyGroupChat isEditing={isEditing} chatRenamed={chatRenamed} setChatRenamed={setChatRenamed}
                     handleGroupChatNameChange={handleGroupChatNameChange} chatName={chatName} toggleEditMode={toggleEditMode}
-                    inputValue={inputValue} handleInputChange={handleInputChange} handleKeyDown={handleKeyDown}
-                    toggleGroupChatModalModifier={toggleGroupChatModalModifier}
+                    valueEntered={valueEntered} handleInputChange={handleInputChange} handleKeyDown={handleKeyDown}
+                    toggleGroupChatModalModifier={toggleGroupChatModalModifier} groupUsers={groupUsers}
                 />
             )}
 
