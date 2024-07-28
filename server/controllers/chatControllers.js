@@ -83,10 +83,9 @@ const createGroupChat = asyncHandler(async (req, res) => {
       .send({ message: "Group chat requires more than 2 users" })
   }
   console.log(req.body);
-  users.push(req.user)
+  //users.push(req.user) removed GroupAdmin from Users array
   console.log(users);
   try {
-    //
     const groupChat = await Chat.create({
       chatName: req.body.name,
       users: users,
