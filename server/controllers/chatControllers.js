@@ -54,8 +54,26 @@ const accessChat = asyncHandler(async (req, res) => {
 })
 
 const fetchChats = asyncHandler(async (req, res) => {
-  
-    const chats = await Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+ // let allChats = []
+
+ const chats = await Chat.find({
+  $or: [
+    { users: req.user._id },
+    { groupAdmin: req.user._id }
+  ]
+})
+.populate("users", "name email") 
+.populate("groupAdmin", "name email") 
+.populate({
+  path: "latestMessage",
+  populate: {
+    path: "sender",
+    select: "name pic email"
+  }
+});
+
+//console.log(chats)
+   /* const singlechats = await Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
     .populate("users", "name email") 
     .populate("groupAdmin", "name email") 
     .populate({
@@ -66,7 +84,14 @@ const fetchChats = asyncHandler(async (req, res) => {
        
     }
   })
-  res.status(200).send(chats)    
+
+  const multiChat = await Chat.find({ "groupAdmin._id": req.user._id })
+  console.log(multiChat)
+  //allChats.push(singlechats)
+  //allChats.push(multiChat)
+  */
+
+res.status(200).send(chats)    
     
 }); 
 
@@ -104,7 +129,6 @@ const createGroupChat = asyncHandler(async (req, res) => {
   }
 })
 
-
 const renameGroupChat = asyncHandler(async (req, res) => {
 
   const { chatId, newChatName } = req.body
@@ -128,7 +152,6 @@ const renameGroupChat = asyncHandler(async (req, res) => {
   }
 })
 
-
 const addToGroup = asyncHandler(async (req, res) => {
   const { userId, chatId } = req.body
 
@@ -149,7 +172,6 @@ const addToGroup = asyncHandler(async (req, res) => {
     res.json(added)
   }
 })
-
 
 const removeFromGroup = asyncHandler(async (req, res) => {
   const { userId, chatId } = req.body
