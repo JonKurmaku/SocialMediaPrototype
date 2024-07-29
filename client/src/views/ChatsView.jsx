@@ -72,6 +72,27 @@ export const ChatsView = () => {
         socket.on("connection", () => setSocketConnected(true));
     },[])
 
+    useEffect(() => {
+        if (roomNumber) {
+            socket.emit('join chat', roomNumber); // Emit join chat with the correct room ID
+        }
+    }, [roomNumber]);
+
+    useEffect(() => {
+    const handleMessageReceived = (newMessageReceived) => {
+        console.log("Message received from socket:", newMessageReceived);
+        setChatMessages((prevMessages) => [...prevMessages, newMessageReceived]);
+    };
+
+    socket.on("message received", handleMessageReceived);
+
+    // Cleanup function to remove the event listener
+    return () => {
+        console.log("Cleaning up socket event listener for 'message received'");
+        socket.off("message received", handleMessageReceived);
+    };
+}, []);
+
 
     const handleSearch = async () => {
         if (!search) {
@@ -178,11 +199,6 @@ export const ChatsView = () => {
         }
     }
 
-    useEffect(() => {
-        if (roomNumber) {
-            socket.emit('join chat', roomNumber); // Emit join chat with the correct room ID
-        }
-    }, [roomNumber]);
     //function to create a group chat
     const createGroupChat = async (name) => {
         try {
@@ -314,52 +330,53 @@ export const ChatsView = () => {
     }
     // console.log('Group users:', groupUsers);
 
-    useEffect(() => {
-        socket.on("message received", (newMessageReceived) => {
-            setChatMessages([...chatMessages, newMessageReceived])
-        })
-    })
+    
 
     //function to send a message to a single chat or group chat
     const sendMessage = async () => {
         try {
-            let Token = user().token
-
+            let Token = user().token;
+    
             const config = {
                 headers: {
                     "Content-type": "application/json",
                     Authorization: `Bearer ${Token}`,
-                    'Cache-Control': 'no-cache', // Disable cache
-                    Pragma: 'no-cache', // Disable cache
-                    Expires: '0', // Disable cache
+                    'Cache-Control': 'no-cache',
+                    Pragma: 'no-cache',
+                    Expires: '0',
                 },
             };
-
+    
             const body = {
                 "content": message,
                 "chatId": chatID
             };
-
-            console.log("Sending message:", body);
-
+    
+            console.log("Sending message to server with payload:", body);
+    
             const { data } = await axios.post('/api/message', body, config);
-            console.log(data);
-
+            console.log("Server response after posting message:", data);
+    
+            // Reset message input
             setMessage('');
-            socket.emit('newMessage', (prev) => [...prev, {
-                chat: null,
+    
+            // Log what is being emitted to socket
+            const messageToEmit = {
+                chat: chatID,
                 content: message,
                 sender: data.sender.name
-            }]);
-            setChatMessages((prev) => [...prev, {
-                chat: null,
-                content: message,
-                sender: data.sender.name
-            }]);
+            };
+            console.log("Emitting message via socket:", messageToEmit);
+    
+            socket.emit('new message', messageToEmit);
+    
+            setChatMessages((prev) => [...prev, messageToEmit]);
+    
         } catch (error) {
-            console.log(error);
+            console.error("Error in sendMessage function:", error);
         }
-    }
+    };
+    
 
     const toggleGroupChatModal = () => {
         setShowGroupChatModal(!showGroupChatModal);
