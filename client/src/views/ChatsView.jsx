@@ -27,6 +27,7 @@ export const ChatsView = () => {
     const [profileModal, setProfileModal] = useState(false);
     const [valueEntered, setValueEntered] = useState('');
     const [groupUsers, setGroupUsers] = useState([]);
+    const [list, setList] = useState(true);
     // const [loadingChat, setLoadingChat] = useState();
 
     useEffect(() => {
@@ -188,7 +189,7 @@ export const ChatsView = () => {
 
             //data.users.map((u) => console.log(u.name));
             setGroupUsers(data.users);
-            
+
 
             const existingChat = chats.find(chat => chat._id === data._id);
             if (!existingChat) {
@@ -228,6 +229,71 @@ export const ChatsView = () => {
             console.log(error);
         }
     }
+
+    //function to remove someone from the group chat
+    const removeFromGroupChat = async (userID) => {
+        try {
+            let Token = user().token
+
+            const config = {
+                headers: {
+                    "Content-type": "application/json",
+                    Authorization: `Bearer ${Token}`,
+                    'Cache-Control': 'no-cache', // Disable cache
+                    Pragma: 'no-cache', // Disable cache
+                    Expires: '0', // Disable cache
+                },
+            };
+
+            const body = {
+                chatId: chatID,
+                userId: userID
+            }
+
+            const { data } = await axios.put('/api/chat/groupremove', body, config)
+            console.log(data);
+
+            setGroupUsers(prevGroupUsers => prevGroupUsers.filter(user => user._id !== userID));
+        } catch (error) {
+            console.log("Error: " + error);
+        }
+    }
+
+    //function to add someone to the group chat
+    const addToGroupChat = async (userID) => {
+        try {
+            let Token = user().token;
+    
+            const config = {
+                headers: {
+                    "Content-type": "application/json",
+                    Authorization: `Bearer ${Token}`,
+                    'Cache-Control': 'no-cache', // Disable cache
+                    Pragma: 'no-cache', // Disable cache
+                    Expires: '0', // Disable cache
+                },
+            };
+    
+            const body = {
+                chatId: chatID,
+                userId: userID
+            };
+    
+            const { data } = await axios.put('/api/chat/groupadd', body, config);
+            console.log("Added user data:", data);
+    
+            if (data.users) {
+                setGroupUsers(data.users);
+                setList(false); 
+            } else {
+                console.error('Unexpected data structure:', data);
+            }
+    
+        } catch (error) {
+            console.log("Error adding to group chat:", error);
+        }
+    }
+    console.log('Group users:', groupUsers);
 
     //function to send a message to a single chat or group chat
     const sendMessage = async () => {
@@ -272,6 +338,10 @@ export const ChatsView = () => {
     const toggleGroupChatModalModifier = () => {
         setShowGroupChatModalModifier(!showGroupChatModalModifier);
         setIsEditing(false)
+
+        if (showGroupChatModalModifier) {
+            fetchedData();
+        }
     };
 
     const toggleEditMode = () => {
@@ -295,7 +365,7 @@ export const ChatsView = () => {
         if (e.key === 'Enter') {
             console.log('Value Entered:', valueEntered);
             const data = await handleSearchUser(valueEntered);
-        
+
             if (data.length > 0) {
                 setSearchUsers((prev) => {
                     const existingUserIds = prev.map(user => user._id);
@@ -306,7 +376,7 @@ export const ChatsView = () => {
             setValueEntered('');
         }
     };
-    console.log(searchUsers);
+
     const handleCreateGroupChat = () => {
         createGroupChat(groupChatName);
         setShowGroupChatModal(false);
@@ -319,6 +389,10 @@ export const ChatsView = () => {
             setChatName(e.target.value);
         }
     }
+
+    const removeUserFromGroup = (userID) => {
+        setGroupUsers(prevGroupUsers => prevGroupUsers.filter(user => user._id !== userID));
+    };
 
     const logout = () => {
         localStorage.removeItem('userInfo');
@@ -334,7 +408,7 @@ export const ChatsView = () => {
                 <div className="navbar">
                     <div className="searchUser">
                         <img src="/searchLogo.png" alt="Search" onClick={handleSearch} />
-                        <input type="text" placeholder="Search User" onChange={(e) => setSearch(e.target.value)} />
+                        <input type="text" placeholder="Search user to chat" onChange={(e) => setSearch(e.target.value)} />
                     </div>
                     <h2>ChillChat</h2>
                     <div className='loggedUser' onClick={toggleDropDownMenu}>
@@ -434,7 +508,8 @@ export const ChatsView = () => {
                 <ModalModifyGroupChat isEditing={isEditing} chatRenamed={chatRenamed} setChatRenamed={setChatRenamed}
                     handleGroupChatNameChange={handleGroupChatNameChange} chatName={chatName} toggleEditMode={toggleEditMode}
                     valueEntered={valueEntered} handleInputChange={handleInputChange} handleKeyDown={handleKeyDown}
-                    toggleGroupChatModalModifier={toggleGroupChatModalModifier} groupUsers={groupUsers}
+                    toggleGroupChatModalModifier={toggleGroupChatModalModifier} groupUsers={groupUsers} removeFromGroupChat={removeFromGroupChat}
+                    removeUserFromGroup={removeUserFromGroup} searchUsers={searchUsers} addToGroupChat={addToGroupChat} list={list}
                 />
             )}
 
