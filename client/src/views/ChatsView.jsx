@@ -4,6 +4,10 @@ import axios from 'axios';
 import user from '../utils/loggedUser';
 import ModalCreateGroupChat from '../components/ModalCreateGroupChat'
 import ModalModifyGroupChat from '../components/ModalModifyGroupChat';
+import io from 'socket.io-client'
+
+const ENDPOINT = 'http://localhost:5000';
+let socket;
 
 export const ChatsView = () => {
     const navigate = useNavigate();
@@ -28,6 +32,9 @@ export const ChatsView = () => {
     const [valueEntered, setValueEntered] = useState('');
     const [groupUsers, setGroupUsers] = useState([]);
     const [list, setList] = useState(true);
+    const [roomNumber, setRoomNumber] = useState();
+    const [socketConnected,setSocketConnected] = useState(false);
+
     // const [loadingChat, setLoadingChat] = useState();
 
     useEffect(() => {
@@ -59,6 +66,11 @@ export const ChatsView = () => {
         fetchedData();
     }, []);
 
+    useEffect(() => {
+        socket = io(ENDPOINT);
+        socket.emit("setup",user);
+        socket.on("connection", () => setSocketConnected(true));
+    },[])
 
 
     const handleSearch = async () => {
@@ -141,7 +153,7 @@ export const ChatsView = () => {
         }
     }
 
-    const seeChat = async (userID) => {
+    const seeChat = async (chatID) => {
         try {
             let Token = user().token
 
@@ -155,15 +167,22 @@ export const ChatsView = () => {
             };
 
 
-            const { data } = await axios.get(`/api/message/${userID}`, config);
+            const { data } = await axios.get(`/api/message/${chatID}`, config);
             console.log(data);
             setChatMessages(data);
             setHasLoaded(true);
+            setRoomNumber(chatID);
+            // console.log(roomNumber);
         } catch (error) {
             console.log(error);
         }
     }
 
+    useEffect(() => {
+        if (roomNumber) {
+            socket.emit('join chat', roomNumber); // Emit join chat with the correct room ID
+        }
+    }, [roomNumber]);
     //function to create a group chat
     const createGroupChat = async (name) => {
         try {
@@ -293,7 +312,13 @@ export const ChatsView = () => {
             console.log("Error adding to group chat:", error);
         }
     }
-    console.log('Group users:', groupUsers);
+    // console.log('Group users:', groupUsers);
+
+    useEffect(() => {
+        socket.on("message received", (newMessageReceived) => {
+            setChatMessages([...chatMessages, newMessageReceived])
+        })
+    })
 
     //function to send a message to a single chat or group chat
     const sendMessage = async () => {
@@ -321,6 +346,11 @@ export const ChatsView = () => {
             console.log(data);
 
             setMessage('');
+            socket.emit('newMessage', (prev) => [...prev, {
+                chat: null,
+                content: message,
+                sender: data.sender.name
+            }]);
             setChatMessages((prev) => [...prev, {
                 chat: null,
                 content: message,
