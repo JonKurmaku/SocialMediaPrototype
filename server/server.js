@@ -10,6 +10,7 @@ const chatRoutes = require("./routes/chatRoutes.js")
 const userRoutes = require("./routes/userRoutes.js")
 const messageRoutes = require("./routes/messageRoutes.js")
 
+
 const app = express()
 dotenv.config()
 connectDB()
@@ -63,11 +64,17 @@ socket.on("typing",(room)=>socket.in(room).emit("typing"))
 socket.on("stop typing",(room)=>socket.in(room).emit("stop typing"))
 
 socket.on("new message",(newMessageReceived)=>{
+    // console.log("newMSGRECEIVED::")
+    // console.log(newMessageReceived)
+
     let chat = newMessageReceived.chat;
+    //console.log("Chat::")
+    //console.log(chat)
 
     if(!chat.users) return console.log('chat.users not defined')
     
-    chat.users.array.forEach(user => {
+    //chat.users.array.forEach(user => {
+        chat.users.forEach(user => {
         if(user._id == newMessageReceived.sender._id) return
 
         socket.in(user._id).emit("message received",newMessageReceived)        

@@ -5,6 +5,7 @@ const User = require("../models/userModel")
 //@description     Create or fetch One to One Chat
 //@route           POST /api/chat/
 //@access          Protected
+
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body
 
@@ -32,6 +33,12 @@ const accessChat = asyncHandler(async (req, res) => {
     res.send(isChat[0]);
   } else {
 
+    //  sender :: receiver.name
+    //  receiver :: sender.name
+    //    if(user._id === chat.name || isSingleChat){
+    //    chat.name => other name
+    //  }
+    
     let receiver = await User.findOne({ _id: userId })
     var chatData = {
       chatName: receiver.name,
@@ -93,7 +100,7 @@ const fetchChats = asyncHandler(async (req, res) => {
 
 res.status(200).send(chats)    
     
-}); 
+}) 
 
 const createGroupChat = asyncHandler(async (req, res) => {
   if (!req.body.users || !req.body.name) {

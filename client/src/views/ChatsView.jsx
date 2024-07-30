@@ -362,14 +362,14 @@ export const ChatsView = () => {
     
             // Log what is being emitted to socket
             const messageToEmit = {
-                chat: chatID,
+                chat: data.chat,
                 content: message,
-                sender: data.sender.name
+                sender: data.sender
             };
             console.log("Emitting message via socket:", messageToEmit);
     
             socket.emit('new message', messageToEmit);
-    
+            
             setChatMessages((prev) => [...prev, messageToEmit]);
     
         } catch (error) {

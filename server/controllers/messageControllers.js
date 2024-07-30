@@ -6,17 +6,22 @@ const Chat = require("../models/chatModel")
 
 const sendMessage = asyncHandler(async(req,res)=>{
     const {content, chatId} = req.body
-
+    //console.log(req.body)
     if(!content || !chatId){
         console.log("Missing data: MessageContent or ChatID passed into request")
         return res.sendStatus(400)
     }
 
+    let _chat = await Chat.findById(chatId)
+
     let newMessage = {
         sender: req.user._id,
         content: content,
-        chat: chatId
+        chat: _chat._id
     }
+
+    // console.log("newMessage")
+    // console.log(newMessage)
 
     try {
         let msg = await Message.create(newMessage)
@@ -31,6 +36,9 @@ const sendMessage = asyncHandler(async(req,res)=>{
         await Chat.findByIdAndUpdate(req.body.chatId,{
             latestMessage: msg,
         })
+
+        // console.log("MSG")
+        // console.log(msg)
 
         res.json(msg)
     } catch (error) {
