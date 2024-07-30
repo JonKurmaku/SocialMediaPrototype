@@ -68,31 +68,34 @@ export const ChatsView = () => {
 
     useEffect(() => {
         socket = io(ENDPOINT);
-        socket.emit("setup",user);
-        socket.on("connection", () => setSocketConnected(true));
-    },[])
+        socket.emit("setup", user());
+        socket.on("connected", () => setSocketConnected(true));
+        socket.on("connection_error", (err) => {
+            console.error('Connection error:', err);
+        });
+        socket.on("connect", () => {
+            console.log("Socket connected:", socket.connected);
+        });
+
+        const handleMessageReceived = (newMessageReceived) => {
+            console.log("Message received from socket:", newMessageReceived);
+            setChatMessages((prevMessages) => [...prevMessages, newMessageReceived]);
+        };
+
+        socket.on("message received", handleMessageReceived);
+        console.log('Event listener for "message received" has been set up');
+
+        return () => {
+            console.log("Cleaning up socket event listener for 'message received'");
+            socket.off("message received", handleMessageReceived);
+        };
+    }, []);
 
     useEffect(() => {
         if (roomNumber) {
-            socket.emit('join chat', roomNumber); // Emit join chat with the correct room ID
+            socket.emit('join chat', roomNumber); 
         }
     }, [roomNumber]);
-
-    useEffect(() => {
-    const handleMessageReceived = (newMessageReceived) => {
-        console.log("Message received from socket:", newMessageReceived);
-        setChatMessages((prevMessages) => [...prevMessages, newMessageReceived]);
-    };
-
-    socket.on("message received", handleMessageReceived);
-
-    // Cleanup function to remove the event listener
-    return () => {
-        console.log("Cleaning up socket event listener for 'message received'");
-        socket.off("message received", handleMessageReceived);
-    };
-}, []);
-
 
     const handleSearch = async () => {
         if (!search) {
