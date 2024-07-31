@@ -479,15 +479,24 @@ export const ChatsView = () => {
 
                         <div className="chatList">
                             {
-                                chats.map((data) => (
-                                    <div key={data._id} onClick={() => {
-                                        seeChat(data._id)
+                               chats.map((data) => (
+                                <div
+                                    key={data._id}
+                                    onClick={() => {
+                                        seeChat(data._id);
                                         setChatID(data._id);
-                                        setChatName(data.chatName);
+                                        if (data.chatName === user().name && data.isGroupChat === false) {
+                                            setChatName(data.users[0].name);
+                                        } else {
+                                            setChatName(data.chatName);
+                                        }
                                         setSelectedChat(data.isGroupChat);
                                         setGroupUsers(data.users);
-                                    }}>{data.chatName}</div>
-                                ))
+                                    }}
+                                >
+                                    {data.chatName === user().name && data.isGroupChat === false ? data.users[0].name : data.chatName}
+                                </div>
+                            )) 
                             }
                         </div>
 
